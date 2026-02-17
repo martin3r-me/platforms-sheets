@@ -98,6 +98,9 @@ class SheetsServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Sheets\Tools\GetCellsTool());
             $registry->register(new \Platform\Sheets\Tools\UpdateCellTool());
             $registry->register(new \Platform\Sheets\Tools\BulkUpdateCellsTool());
+
+            // Export-Tools
+            $registry->register(new \Platform\Sheets\Tools\ExportSpreadsheetTool());
         } catch (\Throwable $e) {
             \Log::warning('Sheets: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
         }

@@ -14,6 +14,28 @@
                     Dashboard
                 </x-ui-button>
                 @endif
+
+                {{-- Export Dropdown --}}
+                <div x-data="{ open: false }" class="relative">
+                    <x-ui-button variant="primary-outline" size="sm" @click="open = !open">
+                        @svg('heroicon-o-arrow-down-tray', 'w-4 h-4 mr-1')
+                        Export
+                        @svg('heroicon-o-chevron-down', 'w-3 h-3 ml-1')
+                    </x-ui-button>
+                    <div x-show="open" @click.outside="open = false" x-transition
+                         class="absolute right-0 mt-1 w-48 bg-[var(--ui-bg)] border border-[var(--ui-border)]/60 rounded-lg shadow-lg z-50 py-1">
+                        <a href="{{ route('sheets.export.download', ['spreadsheet' => $spreadsheet->id, 'format' => 'xlsx']) }}"
+                           class="d-flex items-center gap-2 px-4 py-2 text-sm text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-colors">
+                            @svg('heroicon-o-document-arrow-down', 'w-4 h-4 text-green-600')
+                            Als Excel (.xlsx)
+                        </a>
+                        <a href="{{ route('sheets.export.download', ['spreadsheet' => $spreadsheet->id, 'format' => 'csv']) }}"
+                           class="d-flex items-center gap-2 px-4 py-2 text-sm text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition-colors">
+                            @svg('heroicon-o-document-text', 'w-4 h-4 text-blue-600')
+                            Als CSV (.csv)
+                        </a>
+                    </div>
+                </div>
             </x-slot>
         </x-ui-page-navbar>
     </x-slot>
