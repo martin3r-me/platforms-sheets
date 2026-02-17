@@ -16,7 +16,7 @@
     @if($folders->isNotEmpty())
     <x-ui-sidebar-list label="Ordner">
         @foreach($folders as $folder)
-        <x-ui-sidebar-item :href="route('sheets.dashboard')">
+        <x-ui-sidebar-item :href="route('sheets.folder.show', $folder)">
             @svg('heroicon-o-folder', 'w-4 h-4 text-[var(--ui-secondary)]')
             <span class="ml-2 text-sm truncate">{{ $folder->name }}</span>
         </x-ui-sidebar-item>

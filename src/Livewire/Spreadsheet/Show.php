@@ -14,7 +14,7 @@ class Show extends Component
 
     public function mount(SheetsSpreadsheet $spreadsheet)
     {
-        $this->spreadsheet = $spreadsheet;
+        $this->spreadsheet = $spreadsheet->load('folder');
         $firstWorksheet = $spreadsheet->worksheets()->orderBy('order')->first();
         $this->activeWorksheetId = $firstWorksheet?->id;
     }
