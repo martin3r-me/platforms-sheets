@@ -92,10 +92,10 @@
                         {{-- Column Headers --}}
                         <thead>
                             <tr>
-                                <th class="sticky left-0 top-0 z-20 w-12 min-w-[3rem] bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7">
+                                <th class="sticky left-0 top-0 z-30 w-12 min-w-[3rem] bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7">
                                 </th>
                                 @for($c = 1; $c <= $maxCol; $c++)
-                                <th class="sticky top-0 z-10 min-w-[90px] w-[90px] bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7">
+                                <th class="sticky top-0 z-20 min-w-[90px] w-[90px] bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7">
                                     {{ \Platform\Sheets\Models\SheetsCell::numberToLetter($c) }}
                                 </th>
                                 @endfor
