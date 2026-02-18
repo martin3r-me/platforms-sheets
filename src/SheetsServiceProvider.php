@@ -100,6 +100,7 @@ class SheetsServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Sheets\Tools\UpdateCellTool());
             $registry->register(new \Platform\Sheets\Tools\BulkUpdateCellsTool());
             $registry->register(new \Platform\Sheets\Tools\ImportDataTool());
+            $registry->register(new \Platform\Sheets\Tools\ClearWorksheetTool());
 
             // Layout-Tools (Spaltenbreite, Zeilenhöhe)
             $registry->register(new \Platform\Sheets\Tools\UpdateColumnWidthsTool());
