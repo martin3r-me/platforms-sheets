@@ -115,8 +115,8 @@
     </x-ui-page-container>
 
     {{-- Rechte Sidebar --}}
-    <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Schnellzugriff" width="w-80" :defaultOpen="true">
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Schnellzugriff" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
             <div class="p-6 space-y-6">
                 <div>
                     <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Statistiken</h3>
@@ -143,3 +143,4 @@
         </x-ui-page-sidebar>
     </x-slot>
 </x-ui-page>
+

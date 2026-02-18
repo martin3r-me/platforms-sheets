@@ -150,8 +150,8 @@
     </x-ui-page-container>
 
     {{-- Rechte Sidebar --}}
-    <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Ordner-Details" width="w-80" :defaultOpen="true">
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Ordner-Details" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
             <div class="p-6 space-y-6">
                 {{-- Pfad / Breadcrumb --}}
                 <div>

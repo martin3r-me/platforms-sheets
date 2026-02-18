@@ -256,8 +256,8 @@
     </x-ui-page-container>
 
     {{-- Rechte Sidebar --}}
-    <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Spreadsheet-Info" width="w-72" :defaultOpen="true">
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Spreadsheet-Info" width="w-72" :defaultOpen="false" storeKey="activityOpen" side="right">
             <div class="p-5 space-y-5">
                 {{-- Spreadsheet Details --}}
                 <div>
