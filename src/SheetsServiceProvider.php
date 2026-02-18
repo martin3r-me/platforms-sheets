@@ -96,6 +96,7 @@ class SheetsServiceProvider extends ServiceProvider
 
             // Cell-Tools
             $registry->register(new \Platform\Sheets\Tools\GetCellsTool());
+            $registry->register(new \Platform\Sheets\Tools\GetCellsRangeTool());
             $registry->register(new \Platform\Sheets\Tools\UpdateCellTool());
             $registry->register(new \Platform\Sheets\Tools\BulkUpdateCellsTool());
             $registry->register(new \Platform\Sheets\Tools\ImportDataTool());
