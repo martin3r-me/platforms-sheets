@@ -90,22 +90,48 @@
                 <div class="overflow-auto max-h-[calc(100vh-280px)]">
                     <table class="w-full border-collapse text-sm" style="table-layout: fixed;">
                         {{-- Column Headers --}}
+                        @php
+                            $colWidths = $activeWorksheet->column_widths ?? [];
+                            $rowHeightsMap = $activeWorksheet->row_heights ?? [];
+                            $frozenRows = $activeWorksheet->frozen_rows ?? 0;
+                            $frozenCols = $activeWorksheet->frozen_cols ?? 0;
+                            // Calculate cumulative left offset for frozen columns (row-number col = 3rem = 48px)
+                            $frozenColOffsets = [];
+                            $cumulativeLeft = 48; // row-number column width
+                            for ($fc = 1; $fc <= $frozenCols; $fc++) {
+                                $frozenColOffsets[$fc] = $cumulativeLeft;
+                                $cumulativeLeft += (int) ($colWidths[(string) $fc] ?? 90);
+                            }
+                        @endphp
                         <thead>
                             <tr>
                                 <th class="sticky left-0 top-0 z-30 w-12 min-w-[3rem] bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7">
                                 </th>
                                 @for($c = 1; $c <= $maxCol; $c++)
-                                <th class="sticky top-0 z-20 min-w-[90px] w-[90px] bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7">
+                                @php $cw = $colWidths[(string) $c] ?? 90; @endphp
+                                <th class="sticky top-0 {{ $c <= $frozenCols ? 'left-0 z-30' : 'z-20' }} bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-semibold p-0 h-7"
+                                    style="min-width:{{ $cw }}px;width:{{ $cw }}px;{{ $c <= $frozenCols ? 'left:' . ($frozenColOffsets[$c] ?? 0) . 'px;' : '' }}">
                                     {{ \Platform\Sheets\Models\SheetsCell::numberToLetter($c) }}
                                 </th>
                                 @endfor
                             </tr>
                         </thead>
+                        @php
+                            // Calculate cumulative top offset for frozen rows (header row = 28px)
+                            $frozenRowOffsets = [];
+                            $cumulativeTop = 28; // header row height
+                            for ($fr = 1; $fr <= $frozenRows; $fr++) {
+                                $frozenRowOffsets[$fr] = $cumulativeTop;
+                                $cumulativeTop += (int) ($rowHeightsMap[(string) $fr] ?? 24);
+                            }
+                        @endphp
                         <tbody>
                             @for($r = 1; $r <= $maxRow; $r++)
+                            @php $rh = $rowHeightsMap[(string) $r] ?? 24; @endphp
                             <tr class="group">
                                 {{-- Row Number --}}
-                                <td class="sticky left-0 z-10 bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-medium p-0 h-6 group-hover:bg-[var(--ui-primary)]/5">
+                                <td class="sticky left-0 {{ $r <= $frozenRows ? 'sticky-top z-20' : 'z-10' }} bg-[var(--ui-muted-5)] border-r border-b border-[var(--ui-border)]/40 text-center text-[10px] text-[var(--ui-muted)] font-medium p-0 group-hover:bg-[var(--ui-primary)]/5"
+                                    style="height:{{ $rh }}px;{{ $r <= $frozenRows ? 'position:sticky;top:' . ($frozenRowOffsets[$r] ?? 0) . 'px;z-index:20;' : '' }}">
                                     {{ $r }}
                                 </td>
                                 @for($c = 1; $c <= $maxCol; $c++)
@@ -149,12 +175,29 @@
                                         }
                                     }
                                 @endphp
-                                <td class="border-r border-b border-[var(--ui-border)]/15 px-1.5 py-0 h-6 text-xs truncate
+                                @php
+                                    $isFrozenRow = $r <= $frozenRows;
+                                    $isFrozenCol = $c <= $frozenCols;
+                                    $frozenStyle = '';
+                                    $frozenZ = '';
+                                    if ($isFrozenRow && $isFrozenCol) {
+                                        $frozenStyle = 'position:sticky;top:' . ($frozenRowOffsets[$r] ?? 0) . 'px;left:' . ($frozenColOffsets[$c] ?? 0) . 'px;';
+                                        $frozenZ = 'z-20';
+                                    } elseif ($isFrozenRow) {
+                                        $frozenStyle = 'position:sticky;top:' . ($frozenRowOffsets[$r] ?? 0) . 'px;';
+                                        $frozenZ = 'z-15';
+                                    } elseif ($isFrozenCol) {
+                                        $frozenStyle = 'position:sticky;left:' . ($frozenColOffsets[$c] ?? 0) . 'px;';
+                                        $frozenZ = 'z-15';
+                                    }
+                                @endphp
+                                <td class="border-r border-b border-[var(--ui-border)]/15 px-1.5 py-0 text-xs overflow-hidden {{ $frozenZ }}
+                                        {{ $isFrozenRow || $isFrozenCol ? 'bg-[var(--ui-bg)]' : '' }}
                                         {{ $isLocked && $activeWorksheet->is_protected ? 'bg-amber-500/5' : '' }}
                                         {{ !$fmt || empty($fmt['background_color']) ? ($hasValue ? 'bg-[var(--ui-bg)]' : '') : '' }}
                                         {{ !$fmt || empty($fmt['font_color']) ? 'text-[var(--ui-secondary)]' : '' }}
                                         group-hover:bg-[var(--ui-primary)]/[0.02]"
-                                    @if($cellStyles) style="{{ $cellStyles }}" @endif
+                                    style="height:{{ $rh }}px;{{ $frozenStyle }}{{ $cellStyles }}"
                                     @if($isFormula) title="Formel: {{ $cell->raw_value }}" @endif
                                 >
                                     @if($isFormula && (!$fmt || empty($fmt['font_color'])))

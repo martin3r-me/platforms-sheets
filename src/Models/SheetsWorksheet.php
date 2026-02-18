@@ -18,6 +18,7 @@ class SheetsWorksheet extends Model
         'uuid', 'name', 'order',
         'spreadsheet_id', 'user_id', 'team_id',
         'row_count', 'col_count', 'is_protected',
+        'column_widths', 'row_heights', 'frozen_rows', 'frozen_cols',
     ];
 
     protected $casts = [
@@ -25,6 +26,10 @@ class SheetsWorksheet extends Model
         'is_protected' => 'boolean',
         'row_count' => 'integer',
         'col_count' => 'integer',
+        'column_widths' => 'array',
+        'row_heights' => 'array',
+        'frozen_rows' => 'integer',
+        'frozen_cols' => 'integer',
     ];
 
     protected static function booted(): void

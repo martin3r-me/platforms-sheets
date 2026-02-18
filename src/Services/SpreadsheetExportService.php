@@ -62,6 +62,32 @@ class SpreadsheetExportService
                     $this->applyFormatToExcel($excelSheet, $cellRef, $cell->format);
                 }
             }
+
+            // Apply column widths
+            $columnWidths = $worksheet->column_widths ?? [];
+            foreach ($columnWidths as $colNum => $widthPx) {
+                $colLetter = Coordinate::stringFromColumnIndex((int) $colNum);
+                // Convert px to Excel width units (~7px per unit)
+                $excelWidth = round((int) $widthPx / 7, 2);
+                $excelSheet->getColumnDimension($colLetter)->setWidth($excelWidth);
+            }
+
+            // Apply row heights
+            $rowHeights = $worksheet->row_heights ?? [];
+            foreach ($rowHeights as $rowNum => $heightPx) {
+                // Convert px to Excel points (~0.75pt per px)
+                $excelHeight = round((int) $heightPx * 0.75, 2);
+                $excelSheet->getRowDimension((int) $rowNum)->setRowHeight($excelHeight);
+            }
+
+            // Apply frozen panes
+            $frozenRows = $worksheet->frozen_rows ?? 0;
+            $frozenCols = $worksheet->frozen_cols ?? 0;
+            if ($frozenRows > 0 || $frozenCols > 0) {
+                $freezeCol = $frozenCols > 0 ? Coordinate::stringFromColumnIndex($frozenCols + 1) : 'A';
+                $freezeRow = $frozenRows + 1;
+                $excelSheet->freezePane($freezeCol . $freezeRow);
+            }
         }
 
         $excel->setActiveSheetIndex(0);

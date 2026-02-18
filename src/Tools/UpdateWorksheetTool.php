@@ -17,7 +17,8 @@ class UpdateWorksheetTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /worksheets/{id} - Aktualisiert ein Worksheet. REST-Parameter: worksheet_id (required), name, order, row_count, col_count, is_protected.';
+        return 'PUT /worksheets/{id} - Aktualisiert ein Worksheet. REST-Parameter: worksheet_id (required), name, order, row_count, col_count, is_protected, '
+            . 'frozen_rows (Anzahl fixierter Zeilen oben, 0=keine), frozen_cols (Anzahl fixierter Spalten links, 0=keine).';
     }
 
     public function getSchema(): array
@@ -31,6 +32,8 @@ class UpdateWorksheetTool implements ToolContract, ToolMetadataContract
                 'row_count' => ['type' => 'integer', 'description' => 'Neue Zeilenanzahl'],
                 'col_count' => ['type' => 'integer', 'description' => 'Neue Spaltenanzahl'],
                 'is_protected' => ['type' => 'boolean', 'description' => 'Blattschutz aktivieren/deaktivieren'],
+                'frozen_rows' => ['type' => 'integer', 'description' => 'Anzahl fixierter Zeilen oben (0 = keine, z.B. 1 für Header-Zeile)'],
+                'frozen_cols' => ['type' => 'integer', 'description' => 'Anzahl fixierter Spalten links (0 = keine, z.B. 1 für Beschriftungsspalte)'],
             ],
             'required' => ['worksheet_id'],
         ];
@@ -50,6 +53,8 @@ class UpdateWorksheetTool implements ToolContract, ToolMetadataContract
             if (isset($arguments['row_count'])) $data['row_count'] = $arguments['row_count'];
             if (isset($arguments['col_count'])) $data['col_count'] = $arguments['col_count'];
             if (isset($arguments['is_protected'])) $data['is_protected'] = $arguments['is_protected'];
+            if (isset($arguments['frozen_rows'])) $data['frozen_rows'] = max(0, (int) $arguments['frozen_rows']);
+            if (isset($arguments['frozen_cols'])) $data['frozen_cols'] = max(0, (int) $arguments['frozen_cols']);
 
             $worksheet->update($data);
 
