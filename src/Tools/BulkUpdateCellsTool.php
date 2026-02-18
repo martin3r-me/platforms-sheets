@@ -21,7 +21,9 @@ class BulkUpdateCellsTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /cells/bulk - Schreibt mehrere Zellen auf einmal. Effizient für das Befüllen ganzer Bereiche. REST-Parameter: worksheet_id (required), cells (required, array of {ref, value, format?, is_locked?}).';
+        return 'PUT /cells/bulk - Schreibt mehrere Zellen auf einmal. Effizient für das Befüllen ganzer Bereiche. '
+            . 'REST-Parameter: worksheet_id (required), cells (required, array of {ref, value, format?, is_locked?}). '
+            . 'Format-Objekt: {bold, italic, number_format, background_color, font_color, align}.';
     }
 
     public function getSchema(): array
@@ -38,7 +40,18 @@ class BulkUpdateCellsTool implements ToolContract, ToolMetadataContract
                         'properties' => [
                             'ref' => ['type' => 'string', 'description' => 'Zell-Referenz (z.B. "A1")'],
                             'value' => ['type' => 'string', 'description' => 'Wert (Formeln mit = Prefix)'],
-                            'format' => ['type' => 'object', 'description' => 'Formatierung (optional)'],
+                            'format' => [
+                                'type' => 'object',
+                                'description' => 'Zell-Formatierung (optional)',
+                                'properties' => [
+                                    'bold' => ['type' => 'boolean', 'description' => 'Fett'],
+                                    'italic' => ['type' => 'boolean', 'description' => 'Kursiv'],
+                                    'number_format' => ['type' => 'string', 'description' => 'Zahlenformat: "currency", "percent", "date", "number", "text"'],
+                                    'background_color' => ['type' => 'string', 'description' => 'Hintergrundfarbe als Hex (z.B. "#f0f0f0")'],
+                                    'font_color' => ['type' => 'string', 'description' => 'Schriftfarbe als Hex (z.B. "#ffffff")'],
+                                    'align' => ['type' => 'string', 'enum' => ['left', 'center', 'right'], 'description' => 'Textausrichtung'],
+                                ],
+                            ],
                             'is_locked' => ['type' => 'boolean', 'description' => 'Zelle sperren (optional)'],
                         ],
                         'required' => ['ref', 'value'],
@@ -93,13 +106,15 @@ class BulkUpdateCellsTool implements ToolContract, ToolMetadataContract
 
                 $computedValue = $rawValue;
 
+                $format = $this->normalizeFormat($cellData['format'] ?? null);
+
                 $cell = SheetsCell::updateOrCreate(
                     ['worksheet_id' => $worksheet->id, 'row' => $row, 'col' => $col],
                     [
                         'raw_value' => $rawValue,
                         'computed_value' => $computedValue,
                         'cell_type_id' => $cellType->id,
-                        'format' => $cellData['format'] ?? null,
+                        'format' => $format,
                         'is_locked' => $cellData['is_locked'] ?? false,
                         'user_id' => $context->user->id,
                     ]
@@ -139,6 +154,43 @@ class BulkUpdateCellsTool implements ToolContract, ToolMetadataContract
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', $e->getMessage());
         }
+    }
+
+    protected function normalizeFormat(?array $format): ?array
+    {
+        if (empty($format)) {
+            return null;
+        }
+
+        $allowed = ['bold', 'italic', 'number_format', 'background_color', 'font_color', 'align'];
+        $normalized = [];
+
+        foreach ($allowed as $key) {
+            if (array_key_exists($key, $format)) {
+                $normalized[$key] = $format[$key];
+            }
+        }
+
+        // Validate hex colors
+        foreach (['background_color', 'font_color'] as $colorKey) {
+            if (isset($normalized[$colorKey]) && !preg_match('/^#[0-9a-fA-F]{3,8}$/', $normalized[$colorKey])) {
+                unset($normalized[$colorKey]);
+            }
+        }
+
+        // Validate align
+        if (isset($normalized['align']) && !in_array($normalized['align'], ['left', 'center', 'right'], true)) {
+            unset($normalized['align']);
+        }
+
+        // Cast booleans
+        foreach (['bold', 'italic'] as $boolKey) {
+            if (isset($normalized[$boolKey])) {
+                $normalized[$boolKey] = (bool) $normalized[$boolKey];
+            }
+        }
+
+        return empty($normalized) ? null : $normalized;
     }
 
     protected function getWorksheetCellValues(int $worksheetId): array

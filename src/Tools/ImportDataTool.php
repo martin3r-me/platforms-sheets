@@ -139,7 +139,7 @@ class ImportDataTool implements ToolContract, ToolMetadataContract
                     // Apply header formatting if has_header and first row
                     $format = null;
                     if ($isHeaderRow) {
-                        $format = ['font' => ['bold' => true]];
+                        $format = ['bold' => true];
                     }
 
                     $cell = SheetsCell::updateOrCreate(

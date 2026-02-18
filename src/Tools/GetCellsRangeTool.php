@@ -18,7 +18,10 @@ class GetCellsRangeTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'GET /cells/range - Liest einen Zellbereich als Row-basiertes 2D-Array. Ideal für gezielte Datenabfragen und Validierung nach Bulk-Writes. Parameter: worksheet_id (required), range (required, z.B. "A1:J60", "B2:D10"), include_formulas (optional, bool, default false – gibt Rohe Formeln statt berechneter Werte zurück).';
+        return 'GET /cells/range - Liest einen Zellbereich als Row-basiertes 2D-Array. Ideal für gezielte Datenabfragen und Validierung nach Bulk-Writes. '
+            . 'Parameter: worksheet_id (required), range (required, z.B. "A1:J60", "B2:D10"), '
+            . 'include_formulas (optional, bool, default false – gibt Rohe Formeln statt berechneter Werte zurück), '
+            . 'include_format (optional, bool, default false – gibt zusätzlich ein formats-2D-Array mit Zell-Formatierungen zurück).';
     }
 
     public function getSchema(): array
@@ -29,6 +32,7 @@ class GetCellsRangeTool implements ToolContract, ToolMetadataContract
                 'worksheet_id' => ['type' => 'integer', 'description' => 'ID des Worksheets'],
                 'range' => ['type' => 'string', 'description' => 'Zell-Bereich, z.B. "A1:J60", "B2:D10"'],
                 'include_formulas' => ['type' => 'boolean', 'description' => 'Rohe Formeln statt berechneter Werte zurückgeben (Standard: false)'],
+                'include_format' => ['type' => 'boolean', 'description' => 'Zusätzliches formats-2D-Array mit Zell-Formatierungen zurückgeben (Standard: false)'],
             ],
             'required' => ['worksheet_id', 'range'],
         ];
@@ -44,6 +48,7 @@ class GetCellsRangeTool implements ToolContract, ToolMetadataContract
 
             $range = trim($arguments['range']);
             $includeFormulas = $arguments['include_formulas'] ?? false;
+            $includeFormat = $arguments['include_format'] ?? false;
 
             // Parse range – only rectangular ranges (e.g. "A1:J60") are supported
             if (!preg_match('/^([A-Z]{1,3})(\d+):([A-Z]{1,3})(\d+)$/i', $range, $m)) {
@@ -75,8 +80,10 @@ class GetCellsRangeTool implements ToolContract, ToolMetadataContract
 
             // Build row-based 2D array
             $rows = [];
+            $formats = $includeFormat ? [] : null;
             for ($r = $startRow; $r <= $endRow; $r++) {
                 $row = [];
+                $formatRow = $includeFormat ? [] : null;
                 for ($c = $startCol; $c <= $endCol; $c++) {
                     $cell = $cells->get($r . ':' . $c);
                     if ($cell) {
@@ -85,21 +92,36 @@ class GetCellsRangeTool implements ToolContract, ToolMetadataContract
                         } else {
                             $row[] = $cell->computed_value ?? $cell->raw_value;
                         }
+                        if ($includeFormat) {
+                            $formatRow[] = $cell->format;
+                        }
                     } else {
                         $row[] = null;
+                        if ($includeFormat) {
+                            $formatRow[] = null;
+                        }
                     }
                 }
                 $rows[] = $row;
+                if ($includeFormat) {
+                    $formats[] = $formatRow;
+                }
             }
 
             // Normalize range string for response
             $normalizedRange = strtoupper($m[1]) . $m[2] . ':' . strtoupper($m[3]) . $m[4];
 
-            return ToolResult::success([
+            $result = [
                 'range' => $normalizedRange,
                 'rows' => $rows,
                 'total_cells' => $totalCells,
-            ]);
+            ];
+
+            if ($includeFormat) {
+                $result['formats'] = $formats;
+            }
+
+            return ToolResult::success($result);
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', $e->getMessage());
         }

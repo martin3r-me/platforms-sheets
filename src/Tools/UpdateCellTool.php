@@ -21,7 +21,9 @@ class UpdateCellTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /cells - Schreibt eine einzelne Zelle. Unterstützt Formeln (=SUM(A1:A10)), Text, Zahlen. Prüft Zellschutz. REST-Parameter: worksheet_id (required), ref (required, z.B. "A1") ODER row+col, value (required), format (optional, JSON), is_locked (optional).';
+        return 'PUT /cells - Schreibt eine einzelne Zelle. Unterstützt Formeln (=SUM(A1:A10)), Text, Zahlen. Prüft Zellschutz. '
+            . 'REST-Parameter: worksheet_id (required), ref (required, z.B. "A1") ODER row+col, value (required), '
+            . 'format (optional, Objekt mit: bold, italic, number_format, background_color, font_color, align), is_locked (optional).';
     }
 
     public function getSchema(): array
@@ -34,7 +36,18 @@ class UpdateCellTool implements ToolContract, ToolMetadataContract
                 'row' => ['type' => 'integer', 'description' => 'Zeile (alternativ zu ref)'],
                 'col' => ['type' => 'integer', 'description' => 'Spalte als Zahl (alternativ zu ref)'],
                 'value' => ['type' => 'string', 'description' => 'Wert der Zelle. Formeln beginnen mit = (z.B. "=SUM(A1:A10)")'],
-                'format' => ['type' => 'object', 'description' => 'Formatierung: {font, color, alignment, number_format, borders, bg_color}'],
+                'format' => [
+                    'type' => 'object',
+                    'description' => 'Zell-Formatierung',
+                    'properties' => [
+                        'bold' => ['type' => 'boolean', 'description' => 'Fett'],
+                        'italic' => ['type' => 'boolean', 'description' => 'Kursiv'],
+                        'number_format' => ['type' => 'string', 'description' => 'Zahlenformat: "currency", "percent", "date", "number", "text" oder ein Excel-Formatcode (z.B. "#,##0.00 €")'],
+                        'background_color' => ['type' => 'string', 'description' => 'Hintergrundfarbe als Hex (z.B. "#f0f0f0")'],
+                        'font_color' => ['type' => 'string', 'description' => 'Schriftfarbe als Hex (z.B. "#ffffff")'],
+                        'align' => ['type' => 'string', 'enum' => ['left', 'center', 'right'], 'description' => 'Textausrichtung'],
+                    ],
+                ],
                 'is_locked' => ['type' => 'boolean', 'description' => 'Zelle sperren (wirkt nur bei geschütztem Worksheet)'],
             ],
             'required' => ['worksheet_id', 'value'],
@@ -89,6 +102,9 @@ class UpdateCellTool implements ToolContract, ToolMetadataContract
                 $computedValue = (string) $formulaService->evaluate($rawValue, $cellValues);
             }
 
+            // Normalize and validate format
+            $format = $this->normalizeFormat($arguments['format'] ?? null);
+
             // Upsert cell
             $cell = SheetsCell::updateOrCreate(
                 ['worksheet_id' => $worksheet->id, 'row' => $row, 'col' => $col],
@@ -96,7 +112,7 @@ class UpdateCellTool implements ToolContract, ToolMetadataContract
                     'raw_value' => $rawValue,
                     'computed_value' => $computedValue,
                     'cell_type_id' => $cellType->id,
-                    'format' => $arguments['format'] ?? null,
+                    'format' => $format,
                     'is_locked' => $arguments['is_locked'] ?? false,
                     'user_id' => $context->user->id,
                 ]
@@ -124,11 +140,49 @@ class UpdateCellTool implements ToolContract, ToolMetadataContract
                 'raw_value' => $cell->raw_value,
                 'computed_value' => $cell->computed_value,
                 'cell_type' => $cellTypeKey,
+                'format' => $cell->format,
                 'message' => "Zelle {$cell->cell_ref} aktualisiert.",
             ]);
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', $e->getMessage());
         }
+    }
+
+    protected function normalizeFormat(?array $format): ?array
+    {
+        if (empty($format)) {
+            return null;
+        }
+
+        $allowed = ['bold', 'italic', 'number_format', 'background_color', 'font_color', 'align'];
+        $normalized = [];
+
+        foreach ($allowed as $key) {
+            if (array_key_exists($key, $format)) {
+                $normalized[$key] = $format[$key];
+            }
+        }
+
+        // Validate hex colors
+        foreach (['background_color', 'font_color'] as $colorKey) {
+            if (isset($normalized[$colorKey]) && !preg_match('/^#[0-9a-fA-F]{3,8}$/', $normalized[$colorKey])) {
+                unset($normalized[$colorKey]);
+            }
+        }
+
+        // Validate align
+        if (isset($normalized['align']) && !in_array($normalized['align'], ['left', 'center', 'right'], true)) {
+            unset($normalized['align']);
+        }
+
+        // Cast booleans
+        foreach (['bold', 'italic'] as $boolKey) {
+            if (isset($normalized[$boolKey])) {
+                $normalized[$boolKey] = (bool) $normalized[$boolKey];
+            }
+        }
+
+        return empty($normalized) ? null : $normalized;
     }
 
     protected function getWorksheetCellValues(int $worksheetId): array

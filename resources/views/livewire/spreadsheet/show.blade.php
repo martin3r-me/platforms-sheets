@@ -115,14 +115,49 @@
                                     $isFormula = $cell && str_starts_with($cell->raw_value ?? '', '=');
                                     $isLocked = $cell && $cell->is_locked;
                                     $hasValue = $cell && ($cell->raw_value !== null && $cell->raw_value !== '');
+                                    $fmt = $cell?->format;
+
+                                    // Build inline styles from format
+                                    $cellStyles = '';
+                                    if ($fmt) {
+                                        if (!empty($fmt['background_color'])) {
+                                            $cellStyles .= 'background-color:' . e($fmt['background_color']) . ';';
+                                        }
+                                        if (!empty($fmt['font_color'])) {
+                                            $cellStyles .= 'color:' . e($fmt['font_color']) . ';';
+                                        }
+                                        if (!empty($fmt['bold'])) {
+                                            $cellStyles .= 'font-weight:700;';
+                                        }
+                                        if (!empty($fmt['italic'])) {
+                                            $cellStyles .= 'font-style:italic;';
+                                        }
+                                        if (!empty($fmt['align'])) {
+                                            $cellStyles .= 'text-align:' . e($fmt['align']) . ';';
+                                        }
+                                    }
+
+                                    // Apply number_format display transforms
+                                    if ($fmt && !empty($fmt['number_format']) && is_numeric($displayValue)) {
+                                        $nf = $fmt['number_format'];
+                                        if ($nf === 'percent') {
+                                            $displayValue = number_format((float) $displayValue * 100, 1) . ' %';
+                                        } elseif ($nf === 'currency') {
+                                            $displayValue = number_format((float) $displayValue, 2, ',', '.') . ' €';
+                                        } elseif ($nf === 'number') {
+                                            $displayValue = number_format((float) $displayValue, 2, ',', '.');
+                                        }
+                                    }
                                 @endphp
-                                <td class="border-r border-b border-[var(--ui-border)]/15 px-1.5 py-0 h-6 text-[var(--ui-secondary)] text-xs truncate
+                                <td class="border-r border-b border-[var(--ui-border)]/15 px-1.5 py-0 h-6 text-xs truncate
                                         {{ $isLocked && $activeWorksheet->is_protected ? 'bg-amber-500/5' : '' }}
-                                        {{ $hasValue ? 'bg-[var(--ui-bg)]' : '' }}
+                                        {{ !$fmt || empty($fmt['background_color']) ? ($hasValue ? 'bg-[var(--ui-bg)]' : '') : '' }}
+                                        {{ !$fmt || empty($fmt['font_color']) ? 'text-[var(--ui-secondary)]' : '' }}
                                         group-hover:bg-[var(--ui-primary)]/[0.02]"
+                                    @if($cellStyles) style="{{ $cellStyles }}" @endif
                                     @if($isFormula) title="Formel: {{ $cell->raw_value }}" @endif
                                 >
-                                    @if($isFormula)
+                                    @if($isFormula && (!$fmt || empty($fmt['font_color'])))
                                     <span class="text-[var(--ui-primary)]">{{ $displayValue }}</span>
                                     @else
                                     {{ $displayValue }}

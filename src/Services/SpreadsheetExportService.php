@@ -8,6 +8,7 @@ use Platform\Sheets\Models\SheetsCell;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class SpreadsheetExportService
 {
@@ -56,11 +57,9 @@ class SpreadsheetExportService
                     }
                 }
 
-                // Apply number format from cell format metadata
-                if (!empty($cell->format) && isset($cell->format['number_format'])) {
-                    $excelSheet->getStyle($cellRef)
-                        ->getNumberFormat()
-                        ->setFormatCode($cell->format['number_format']);
+                // Apply cell formatting from format metadata
+                if (!empty($cell->format)) {
+                    $this->applyFormatToExcel($excelSheet, $cellRef, $cell->format);
                 }
             }
         }
@@ -153,6 +152,67 @@ class SpreadsheetExportService
         }
 
         return ['files' => $files];
+    }
+
+    /**
+     * Apply cell format properties to an Excel cell style.
+     */
+    protected function applyFormatToExcel($excelSheet, string $cellRef, array $format): void
+    {
+        $style = $excelSheet->getStyle($cellRef);
+
+        if (!empty($format['bold'])) {
+            $style->getFont()->setBold(true);
+        }
+
+        if (!empty($format['italic'])) {
+            $style->getFont()->setItalic(true);
+        }
+
+        if (!empty($format['font_color'])) {
+            $hex = ltrim($format['font_color'], '#');
+            $style->getFont()->getColor()->setARGB('FF' . strtoupper($hex));
+        }
+
+        if (!empty($format['background_color'])) {
+            $hex = ltrim($format['background_color'], '#');
+            $style->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()
+                ->setARGB('FF' . strtoupper($hex));
+        }
+
+        if (!empty($format['align'])) {
+            $alignMap = [
+                'left' => Alignment::HORIZONTAL_LEFT,
+                'center' => Alignment::HORIZONTAL_CENTER,
+                'right' => Alignment::HORIZONTAL_RIGHT,
+            ];
+            if (isset($alignMap[$format['align']])) {
+                $style->getAlignment()->setHorizontal($alignMap[$format['align']]);
+            }
+        }
+
+        if (!empty($format['number_format'])) {
+            $formatCode = $this->resolveNumberFormat($format['number_format']);
+            $style->getNumberFormat()->setFormatCode($formatCode);
+        }
+    }
+
+    /**
+     * Resolve a semantic number_format name to an Excel format code.
+     */
+    protected function resolveNumberFormat(string $format): string
+    {
+        $presets = [
+            'currency' => '#,##0.00 €',
+            'percent' => '0.00%',
+            'date' => 'DD.MM.YYYY',
+            'number' => '#,##0.00',
+            'text' => '@',
+        ];
+
+        return $presets[$format] ?? $format;
     }
 
     /**
