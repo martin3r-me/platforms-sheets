@@ -98,6 +98,7 @@ class SheetsServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Sheets\Tools\GetCellsTool());
             $registry->register(new \Platform\Sheets\Tools\UpdateCellTool());
             $registry->register(new \Platform\Sheets\Tools\BulkUpdateCellsTool());
+            $registry->register(new \Platform\Sheets\Tools\ImportDataTool());
 
             // Export-Tools
             $registry->register(new \Platform\Sheets\Tools\ExportSpreadsheetTool());
