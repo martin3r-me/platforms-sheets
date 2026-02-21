@@ -255,6 +255,80 @@
         </div>
     </x-ui-page-container>
 
+    {{-- Linke Sidebar --}}
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Navigation" width="w-72" :defaultOpen="true">
+            <div class="p-5 space-y-5">
+                {{-- Zurück --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Allgemein</h3>
+                    <div class="space-y-1">
+                        <a href="{{ route('sheets.dashboard') }}" wire:navigate
+                           class="d-flex items-center gap-2 p-2 rounded-md text-xs text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)] transition-colors">
+                            @svg('heroicon-o-home', 'w-3.5 h-3.5')
+                            Dashboard
+                        </a>
+                        @if($spreadsheet->folder)
+                        <a href="{{ route('sheets.folder.show', $spreadsheet->folder) }}" wire:navigate
+                           class="d-flex items-center gap-2 p-2 rounded-md text-xs text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)] transition-colors">
+                            @svg('heroicon-o-folder', 'w-3.5 h-3.5')
+                            {{ $spreadsheet->folder->name }}
+                        </a>
+                        @endif
+                        <div class="d-flex items-center gap-2 p-2 rounded-md text-xs bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium">
+                            @svg('heroicon-o-table-cells', 'w-3.5 h-3.5')
+                            {{ $spreadsheet->name }}
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Worksheets --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">
+                        Worksheets ({{ $worksheets->count() }})
+                    </h3>
+                    <div class="space-y-1">
+                        @foreach($worksheets as $ws)
+                        <button wire:click="selectWorksheet({{ $ws->id }})"
+                            class="w-full d-flex items-center gap-2 p-2 rounded-md text-xs transition-colors
+                                {{ $activeWorksheet && $activeWorksheet->id === $ws->id
+                                    ? 'bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium'
+                                    : 'text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)]' }}"
+                        >
+                            @svg('heroicon-o-document', 'w-3.5 h-3.5')
+                            <span class="flex-grow-1 text-left truncate">{{ $ws->name }}</span>
+                            @if($ws->is_protected)
+                                @svg('heroicon-o-lock-closed', 'w-3 h-3 opacity-50')
+                            @endif
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Quick Stats --}}
+                @if($activeWorksheet)
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Aktives Worksheet</h3>
+                    <div class="space-y-2">
+                        <div class="d-flex items-center justify-between p-2.5 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40">
+                            <span class="text-[11px] text-[var(--ui-muted)]">Zellen</span>
+                            <span class="text-xs font-bold text-[var(--ui-secondary)]">{{ $cells->count() }}</span>
+                        </div>
+                        <div class="d-flex items-center justify-between p-2.5 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40">
+                            <span class="text-[11px] text-[var(--ui-muted)]">Spalten</span>
+                            <span class="text-xs font-bold text-[var(--ui-secondary)]">{{ $activeWorksheet->col_count }}</span>
+                        </div>
+                        <div class="d-flex items-center justify-between p-2.5 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40">
+                            <span class="text-[11px] text-[var(--ui-muted)]">Zeilen</span>
+                            <span class="text-xs font-bold text-[var(--ui-secondary)]">{{ $activeWorksheet->row_count }}</span>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+
     {{-- Rechte Sidebar --}}
     <x-slot name="activity">
         <x-ui-page-sidebar title="Spreadsheet-Info" width="w-72" :defaultOpen="false" storeKey="activityOpen" side="right">

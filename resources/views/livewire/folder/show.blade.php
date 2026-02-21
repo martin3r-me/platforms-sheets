@@ -149,6 +149,72 @@
         </div>
     </x-ui-page-container>
 
+    {{-- Linke Sidebar --}}
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Navigation" width="w-72" :defaultOpen="true">
+            <div class="p-5 space-y-5">
+                {{-- Zurück --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Allgemein</h3>
+                    <div class="space-y-1">
+                        <a href="{{ route('sheets.dashboard') }}" wire:navigate
+                           class="d-flex items-center gap-2 p-2 rounded-md text-xs text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)] transition-colors">
+                            @svg('heroicon-o-home', 'w-3.5 h-3.5')
+                            Dashboard
+                        </a>
+                        @if($folder->parent)
+                        <a href="{{ route('sheets.folder.show', $folder->parent) }}" wire:navigate
+                           class="d-flex items-center gap-2 p-2 rounded-md text-xs text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)] transition-colors">
+                            @svg('heroicon-o-arrow-uturn-left', 'w-3.5 h-3.5')
+                            {{ $folder->parent->name }}
+                        </a>
+                        @endif
+                        <div class="d-flex items-center gap-2 p-2 rounded-md text-xs bg-[var(--ui-primary)]/10 text-[var(--ui-primary)] font-medium">
+                            @svg('heroicon-o-folder', 'w-3.5 h-3.5')
+                            {{ $folder->name }}
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Unterordner --}}
+                @if($folder->children->isNotEmpty())
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">
+                        Unterordner ({{ $folder->children->count() }})
+                    </h3>
+                    <div class="space-y-1">
+                        @foreach($folder->children as $child)
+                        <a href="{{ route('sheets.folder.show', $child) }}" wire:navigate
+                           class="d-flex items-center gap-2 p-2 rounded-md text-xs text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)] transition-colors">
+                            @svg('heroicon-o-folder', 'w-3.5 h-3.5')
+                            <span class="truncate">{{ $child->name }}</span>
+                        </a>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                {{-- Spreadsheets --}}
+                @if($folder->spreadsheets->isNotEmpty())
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">
+                        Spreadsheets ({{ $folder->spreadsheets->count() }})
+                    </h3>
+                    <div class="space-y-1">
+                        @foreach($folder->spreadsheets as $ss)
+                        <a href="{{ route('sheets.spreadsheet.show', $ss) }}" wire:navigate
+                           class="d-flex items-center gap-2 p-2 rounded-md text-xs text-[var(--ui-muted)] hover:bg-[var(--ui-muted-5)] hover:text-[var(--ui-secondary)] transition-colors">
+                            @svg('heroicon-o-table-cells', 'w-3.5 h-3.5')
+                            <span class="truncate">{{ $ss->name }}</span>
+                        </a>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+
     {{-- Rechte Sidebar --}}
     <x-slot name="activity">
         <x-ui-page-sidebar title="Ordner-Details" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
