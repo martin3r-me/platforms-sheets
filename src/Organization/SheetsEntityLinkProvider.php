@@ -15,7 +15,7 @@ class SheetsEntityLinkProvider implements EntityLinkProvider
     public function linkTypeConfig(): array
     {
         return [
-            'sheets_spreadsheet' => ['label' => 'Spreadsheets', 'icon' => 'table-cells', 'route' => null],
+            'sheets_spreadsheet' => ['label' => 'Spreadsheets', 'singular' => 'Spreadsheet', 'icon' => 'table-cells', 'route' => null],
         ];
     }
 
@@ -41,6 +41,11 @@ class SheetsEntityLinkProvider implements EntityLinkProvider
     }
 
     public function timeTrackableCascades(): array
+    {
+        return [];
+    }
+
+    public function activityChildren(string $morphAlias, array $linkableIds): array
     {
         return [];
     }
