@@ -30,6 +30,14 @@ class SheetsServiceProvider extends ServiceProvider
             'sheets_spreadsheet' => \Platform\Sheets\Models\SheetsSpreadsheet::class,
         ]);
 
+        // EntityLinkProvider registrieren (loose Kopplung mit Organization-Modul)
+        try {
+            resolve(\Platform\Organization\Services\EntityLinkRegistry::class)
+                ->register(new \Platform\Sheets\Organization\SheetsEntityLinkProvider());
+        } catch (\Throwable $e) {
+            // Organization-Modul nicht geladen
+        }
+
         if (
             config()->has('sheets.routing') &&
             config()->has('sheets.navigation') &&
